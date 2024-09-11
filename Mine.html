@@ -18,6 +18,8 @@
             width: 16px;
             height: 16px;
             text-align: center;
+            position: relative;
+            transition: background 0.3s ease;
         }
 
         #board tr td.clicked {
@@ -27,6 +29,11 @@
         #board tr td.mine {
             background: #FF0000;
         }
+
+        .highlight {
+            background: #f1c40f; /* Highlight color */
+            transition: background 0.1s ease; /* Faster transition for highlight */
+        }
     </style>
 </head>
 
@@ -35,7 +42,7 @@
     지뢰 갯수: <input type="number" id="mine" value="10">
     <table id="board">
     </table>
-    <BUTTON onclick="genGrid();">새로운 게임</BUTTON>
+    <button onclick="genGrid();">새로운 게임</button>
     <script>
         let grid = document.getElementById("board");
 
@@ -58,8 +65,9 @@
                 let row = grid.insertRow(i);
                 for (let j = 0; j < 8; j++) {
                     let cell = row.insertCell(j);
+                    cell.classList.add('cell'); // 클래스 추가
                     cell.onclick = function () {
-                        clickBox(this);
+                        clickRandomBox(); // 클릭 시 랜덤 박스 클릭 함수 호출
                     };
 
                     // 지뢰 설정
@@ -90,30 +98,53 @@
             end();
         }
 
+        // 하이라이트를 랜덤한 셀에만 적용
+        function clickRandomBox() {
+            // 모든 셀을 가져옴
+            const cells = document.querySelectorAll("#board td");
+
+            // 클릭되지 않은 셀들만 필터링
+            const unclickedCells = Array.from(cells).filter(cell => cell.className !== "clicked" && cell.className !== "mine");
+
+            if (unclickedCells.length > 0) {
+                // 모든 셀에서 highlight 클래스를 제거
+                unclickedCells.forEach(cell => cell.classList.remove('highlight'));
+
+                // 현재 셀을 랜덤으로 선택하고 highlight 클래스를 추가
+                const randomCell = unclickedCells[Math.floor(Math.random() * unclickedCells.length)];
+                randomCell.classList.add('highlight');
+                
+                // 0.3초 후에 하이라이트를 제거하고 셀을 클릭
+                setTimeout(() => {
+                    randomCell.classList.remove('highlight');
+                    clickBox(randomCell); // 선택한 셀 클릭
+                }, 300); // 0.3초 후
+            }
+        }
+
         function NearMine(cell) {
-        let count = 0;  // 주변 지뢰 개수를 저장할 변수
-        let rowIdx = cell.parentNode.rowIndex;  // 클릭된 셀의 행 인덱스를 가져옴
-        let colIdx = cell.cellIndex;  // 클릭된 셀의 열 인덱스를 가져옴
-    
-        // 클릭된 셀의 주변 8칸을 탐색하기 위한 이중 반복문
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
-                let newRow = rowIdx + i;  // 탐색 중인 셀의 새로운 행 인덱스
-                let newCol = colIdx + j;  // 탐색 중인 셀의 새로운 열 인덱스
-            
-                // 탐색 중인 셀이 그리드 범위 내에 있는지 확인
-                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-                    // 만약 해당 셀이 지뢰("mine" 속성이 "true")일 경우 count 증가
-                    if (grid.rows[newRow].cells[newCol].getAttribute("mine") == "true") {
-                        count++;
+            let count = 0;  // 주변 지뢰 개수를 저장할 변수
+            let rowIdx = cell.parentNode.rowIndex;  // 클릭된 셀의 행 인덱스를 가져옴
+            let colIdx = cell.cellIndex;  // 클릭된 셀의 열 인덱스를 가져옴
+        
+            // 클릭된 셀의 주변 8칸을 탐색하기 위한 이중 반복문
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    let newRow = rowIdx + i;  // 탐색 중인 셀의 새로운 행 인덱스
+                    let newCol = colIdx + j;  // 탐색 중인 셀의 새로운 열 인덱스
+                
+                    // 탐색 중인 셀이 그리드 범위 내에 있는지 확인
+                    if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                        // 만약 해당 셀이 지뢰("mine" 속성이 "true")일 경우 count 증가
+                        if (grid.rows[newRow].cells[newCol].getAttribute("mine") == "true") {
+                            count++;
+                        }
                     }
                 }
             }
+            // 클릭된 셀에 주변 지뢰 개수를 표시
+            cell.innerHTML = count;
         }
-        // 클릭된 셀에 주변 지뢰 개수를 표시
-        cell.innerHTML = count;
-        }
-
 
         function openEmptyCells(cell) {
             let rowIdx = cell.parentNode.rowIndex;
@@ -138,18 +169,18 @@
             }
         }
 
-        function end(){
+        function end() {
             let count = 0;
-            for(let i = 0; i < 8; i++){
-                for(let j = 0; j < 8; j++){
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
                     let cell = grid.rows[i].cells[j];
-                    if(cell.className == "clicked"){
+                    if (cell.className == "clicked") {
                         count++;
                     }
                 }
             }
-            if(count == (64 - document.getElementById("mine").value)){
-            alert("성공!");
+            if (count == (64 - document.getElementById("mine").value)) {
+                alert("성공!");
             }
         }
     </script>
