@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <style>
+        * {
+            text-align: center;
+        }
+
+        #board {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #board tr td {
+            border: 1px solid white;
+            background: #34da79;
+            width: 16px;
+            height: 16px;
+            text-align: center;
+        }
+
+        #board tr td.clicked {
+            background: #8884b1;
+        }
+
+        #board tr td.mine {
+            background: #FF0000;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>지뢰찾기</h1>
+    지뢰 갯수: <input type="number" id="mine" value="10">
+    <table id="board">
+    </table>
+    <BUTTON onclick="genGrid();">새로운 게임</BUTTON>
+    <script>
+        let grid = document.getElementById("board");
+
+        function genGrid() {
+            grid.innerHTML = "";
+
+            let mineCount = document.getElementById("mine").value; 
+            let totalCells = 8 * 8;
+            let mines = Array(totalCells).fill(false);
+            for (let i = 0; i < mineCount; i++) {
+                let index;
+                do {
+                    index = Math.floor(Math.random() * totalCells);
+                } while (mines[index]); // 이미 지뢰가 있는 경우 다시 뽑기
+                mines[index] = true;
+            }
+
+            let mineIndex = 0; 
+            for (let i = 0; i < 8; i++) {
+                let row = grid.insertRow(i);
+                for (let j = 0; j < 8; j++) {
+                    let cell = row.insertCell(j);
+                    cell.onclick = function () {
+                        clickBox(this);
+                    };
+
+                    // 지뢰 설정
+                    let mine = document.createAttribute("mine");
+                    mine.value = mines[mineIndex] ? "true" : "false"; // 인덱스에 해당하는 지뢰 여부 설정
+                    cell.setAttributeNode(mine);
+
+                    mineIndex++;
+                }
+            }
+        }
+
+        function clickBox(cell) {
+            if (cell.className === "clicked") return; // 이미 클릭된 셀 무시
+
+            if (cell.getAttribute("mine") == "true") {
+                cell.className = "mine";
+                alert("게임이 종료되었습니다.");
+            } else {
+                cell.className = "clicked";
+                NearMine(cell);
+
+                // 주변에 지뢰가 없으면 빈 셀 자동 열기
+                if (cell.innerHTML == "0") {
+                    openEmptyCells(cell);
+                }
+            }
+            end();
+        }
+
+        function NearMine(cell) {
+        let count = 0;  // 주변 지뢰 개수를 저장할 변수
+        let rowIdx = cell.parentNode.rowIndex;  // 클릭된 셀의 행 인덱스를 가져옴
+        let colIdx = cell.cellIndex;  // 클릭된 셀의 열 인덱스를 가져옴
+    
+        // 클릭된 셀의 주변 8칸을 탐색하기 위한 이중 반복문
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                let newRow = rowIdx + i;  // 탐색 중인 셀의 새로운 행 인덱스
+                let newCol = colIdx + j;  // 탐색 중인 셀의 새로운 열 인덱스
+            
+                // 탐색 중인 셀이 그리드 범위 내에 있는지 확인
+                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                    // 만약 해당 셀이 지뢰("mine" 속성이 "true")일 경우 count 증가
+                    if (grid.rows[newRow].cells[newCol].getAttribute("mine") == "true") {
+                        count++;
+                    }
+                }
+            }
+        }
+        // 클릭된 셀에 주변 지뢰 개수를 표시
+        cell.innerHTML = count;
+        }
+
+
+        function openEmptyCells(cell) {
+            let rowIdx = cell.parentNode.rowIndex;
+            let colIdx = cell.cellIndex;
+
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    let newRow = rowIdx + i;
+                    let newCol = colIdx + j;
+                    if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                        let nearbyCell = grid.rows[newRow].cells[newCol];
+                        if (nearbyCell.className !== "clicked" && nearbyCell.getAttribute("mine") === "false") {
+                            nearbyCell.className = "clicked";
+                            NearMine(nearbyCell);
+
+                            if (nearbyCell.innerHTML == "0") {
+                                openEmptyCells(nearbyCell);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function end(){
+            let count = 0;
+            for(let i = 0; i < 8; i++){
+                for(let j = 0; j < 8; j++){
+                    let cell = grid.rows[i].cells[j];
+                    if(cell.className == "clicked"){
+                        count++;
+                    }
+                }
+            }
+            if(count == (64 - document.getElementById("mine").value)){
+            alert("성공!");
+            }
+        }
+    </script>
+</body>
+
+</html>
